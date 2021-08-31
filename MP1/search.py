@@ -23,6 +23,7 @@ files and classes when code is run, so be careful to not modify anything else.
 # Initialize it with a list/tuple of objectives
 # Call compute_mst_weight to get the weight of the MST with those objectives
 # TODO: hint, you probably want to cache the MST value for sets of objectives you've already computed...
+from collections import deque
 class MST:
     def __init__(self, objectives):
         self.elements = {key: None for key in objectives}
@@ -76,7 +77,24 @@ def bfs(maze):
 
     @return path: a list of tuples containing the coordinates of each state in the computed path
     """
-    return []
+
+    q = deque()
+    q.append(maze[maze.start])
+    while len(q) != 0:
+        start = q.pop()
+        for point in maze.neighbors(start):
+            if point == waypoint:
+                path = []
+                while point.states_explored > 0:
+                    path.appendleft(point)
+                    neighbor
+                    for neighbor in point.:
+
+                        if neighbor.states_explored == point.states_explored -1:
+                            neighbor = point
+                return path
+
+    return [path]
 
 def astar_single(maze):
     """
