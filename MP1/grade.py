@@ -67,16 +67,21 @@ def grade_optimal(name, key, mazes, solution, weight = 1):
         path, states_explored = key[case]
         z = getattr(search, solution)(maze)
         # check that the path is valid 
-        score_validity  = int(maze.validate_path(z) is None)
+        ret_valid = maze.validate_path(z)
+        score_validity  = int(ret_valid is None)
         # check that the length of the student’s path matches 
         true_len = (path if type(path) is int else len(path))
-        score_length    = int(len(z) == true_len)
-        # check that student explores at most 10% more states than solution
-        score_explored = maze.states_explored < 1.1 * states_explored
+        if score_validity:
+            score_length    = int(len(z) == true_len)
+            # check that student explores at most 10% more states than solution
+            score_explored = maze.states_explored < 1.1 * states_explored
+        else:
+            score_length = 0
+            score_explored = 0
         return (
             {
                 'name'      : '{0}: `validate_path(_:)` for \'{1}\' maze'.format(name, case),
-                'output'    : 'Your path validity is {}'.format(score_validity),
+                'output'    : 'Your path is valid' if score_validity else "Your path is not valid, error: {}".format(ret_valid),
                 'score'     : 2 * weight * score_validity,
                 'max_score' : 2 * weight,
                 'visibility': 'visible'
@@ -104,17 +109,22 @@ def grade_suboptimal(name, key, mazes, solution):
         path, states_explored = key[case]
         z = getattr(search, solution)(maze)
         # check that the path is valid 
-        score_validity  = int(maze.validate_path(z) is None)
+        ret_valid = maze.validate_path(z)
+        score_validity  = int(ret_valid is None)
         # check that the path length isn't too bad 
         sol_len = (path if type(path) is int else len(path))
-        score_length    = ( len(z)  < 1.2 * sol_len )
-        
-        score_explored = maze.states_explored < 1.2 * states_explored
+        if score_validity:
+            score_length    = ( len(z)  < 1.2 * sol_len )
+            
+            score_explored = maze.states_explored < 1.2 * states_explored
+        else:
+            score_length    = 0
+            score_explored = 0
 
         return (
             {
                 'name'      : '{0}: `validate_path(_:)` for \'{1}\' maze'.format(name, case),
-                'output'    : 'Your path validity is {}'.format(score_validity),
+                'output'    : 'Your path is valid' if score_validity else "Your path is not valid, error: {}".format(ret_valid),
                 'score'     : 2 * score_validity,
                 'max_score' : 2,
                 'visibility': 'visible'

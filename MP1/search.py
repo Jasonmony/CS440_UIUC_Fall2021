@@ -79,22 +79,45 @@ def bfs(maze):
     """
 
     q = deque()
-    q.append(maze[maze.start])
+    path = deque()
+    parentdict ={}
+    visited = set()
+    q.append(maze.start)
+    #print(maze.waypoints)
     while len(q) != 0:
-        start = q.pop()
-        for point in maze.neighbors(start):
-            if point == waypoint:
-                path = []
-                while point.states_explored > 0:
-                    path.appendleft(point)
-                    neighbor
-                    for neighbor in point.:
+        startpoint = q.popleft()
+        #print(startpoint)
+        if startpoint not in visited:
+            visited.add(startpoint)
+            #print("visited is" )
+            #print(visited)
+            for point in maze.neighbors(startpoint[0],startpoint[1]):
+                if point not in visited:
+                    parentdict[point] = startpoint  # keep track of the parent of visited node
+                    print(maze.states_explored)
+                #print(parentdict[point])
 
-                        if neighbor.states_explored == point.states_explored -1:
-                            neighbor = point
-                return path
+                    if point == maze.waypoints[0]:  #found waypoint, find the path now
+                        #print (numberofstep)
+                        print (parentdict)
+                        while point != maze.start:
+                           
+                            path.appendleft(point)
+                            print(point)
 
-    return [path]
+                            point = parentdict[point] # back track parent node for the path
+                           
+                            
+                        print("path is")
+                        print(path)
+                        return path
+                    else:
+                        q.append(point) #add neighbor to frontier queue
+                        print(q)
+                
+    return []
+
+    
 
 def astar_single(maze):
     """
