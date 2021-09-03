@@ -24,6 +24,8 @@ files and classes when code is run, so be careful to not modify anything else.
 # Call compute_mst_weight to get the weight of the MST with those objectives
 # TODO: hint, you probably want to cache the MST value for sets of objectives you've already computed...
 from collections import deque
+import heapq
+
 class MST:
     def __init__(self, objectives):
         self.elements = {key: None for key in objectives}
@@ -94,30 +96,33 @@ def bfs(maze):
             for point in maze.neighbors(startpoint[0],startpoint[1]):
                 if point not in visited:
                     parentdict[point] = startpoint  # keep track of the parent of visited node
-                    print(maze.states_explored)
+                    #print(maze.states_explored)
                 #print(parentdict[point])
 
                     if point == maze.waypoints[0]:  #found waypoint, find the path now
                         #print (numberofstep)
-                        print (parentdict)
+                        #print (parentdict)
                         while point != maze.start:
                            
                             path.appendleft(point)
-                            print(point)
+                            #print(point)
 
                             point = parentdict[point] # back track parent node for the path
                            
                             
-                        print("path is")
-                        print(path)
+                        #print("path is")
+                        #print(path)
+                        path.appendleft(maze.start)
                         return path
                     else:
                         q.append(point) #add neighbor to frontier queue
-                        print(q)
+                        #print(q)
                 
     return []
 
-    
+def h_single(point1, point2):
+
+    return abs(point1[0]-point2[0])+abs(point1[1]-point2[1])
 
 def astar_single(maze):
     """
@@ -127,6 +132,49 @@ def astar_single(maze):
 
     @return path: a list of tuples containing the coordinates of each state in the computed path
     """
+    q = []
+    heapq.heapify(q)
+    path = deque()
+    parentdict = {}
+    depthdict ={} #keep track of g(a)
+    visited = set()
+    depthdict[maze.start] = 0
+    heapq.heappush(q,(depthdict[maze.start]+h_single(maze.start,maze.waypoints[0]),maze.start))
+    #print(q)
+    while len(q) != 0:
+        startpoint = heapq.heappop(q)[1]
+        #print(startpoint)
+        if startpoint not in visited:
+            visited.add(startpoint)
+            #print("visited is" )
+            #print(visited)
+            for point in maze.neighbors(startpoint[0],startpoint[1]):
+                #print(point)
+                if point not in visited:
+                    parentdict[point] = startpoint  # keep track of the parent of visited node
+                    depthdict[point] = depthdict[parentdict[point]] +1
+                    #print(maze.states_explored)
+                    #print(parentdict[point])
+
+                    if point == maze.waypoints[0]:  #found waypoint, find the path now
+                        #print (numberofstep)
+                        #print (parentdict)
+                        while point != maze.start:
+                           
+                            path.appendleft(point)
+                            #print(point)
+
+                            point = parentdict[point] # back track parent node for the path
+                           
+                            
+                        #print("path is")
+                        #print(path)
+                        path.appendleft(maze.start)
+                        return path
+                    else:
+                        heapq.heappush(q,(depthdict[point]+h_single(point,maze.waypoints[0]),point)) #add neighbor to heapq
+                        #print(q)
+                
     return []
 
 def astar_corner(maze):
