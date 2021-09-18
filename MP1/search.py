@@ -139,6 +139,8 @@ def h_multiple(current_pos, remaining_goals):
 
     return h_total
 
+
+
 def astar_single(maze):
     """
     Runs A star for part 2 of the assignment.
@@ -193,8 +195,17 @@ def astar_single(maze):
     return []
 
 
+#class Point:
+    def __init__(self, pos, parent, depth,  remaining_goals):
+        self.pos = pos
+        self.parent = parent
+        self.depth  = depth
+        self.remaining_goals = remaining_goals
 
-def astar_multiple(maze):
+    
+     
+
+#def astar_multiple(maze):
     """
     Runs A star for part 4 of the assignment in the case where there are
     multiple objectives.
@@ -207,40 +218,63 @@ def astar_multiple(maze):
     heapq.heapify(q)
     path = deque()
     parentdict = {}
-    depthdict ={} #keep track of g(a)
-    visited = []
+    #depthdict ={} #keep track of g(a)
+    visited = {}
     all_waypoints = maze.waypoints
-    #remaining_goal_list = list(remaining_goal)
-    #remaining_goal = tuple(remaining_goal_list)
-    #print(all_waypoints)
-    initialdepth = 0
-    #print("H_multiple_test")
-    #print(h_multiple(maze.start,all_waypoints))
-    #path.append((maze.start,all_waypoints,initialdepth))
-    heapq.heappush(q,(0+h_multiple(maze.start,all_waypoints),(maze.start,all_waypoints)))
-    depthdict[(maze.start,all_waypoints)] = initialdepth
+    point = Point(maze.start, None, 0, maze.waypoints)
+    
+    #initialdepth = 0
+    
+    heapq.heappush(q,(point.depth+h_multiple(point.pos,point.remaining_goals),point))
+    #depthdict[(maze.start,all_waypoints)] = initialdepth
 
-    #heapq.heappush(q,(depthdict[(maze.start,remaining_goal)]+h_multiple(maze.start,remaining_goal),(maze.start,remaining_goal)))
-    #print(q)
+    print(q)
+    print(point.pos)
+
     allfound = False
-    parentdict  [(maze.start,all_waypoints)]=1
 
     while allfound != True:
-        [startpoint,remaining_goal] = heapq.heappop(q)[1]
+        #startpoint = Point.point()
+        print(q)
+        startpoint = heapq.heappop(q)[1]
+        print(point.pos)
+        print(startpoint.pos)
         #print ("startpoint and remaingoal is",[startpoint,remaining_goal] )
         #print(startpoint)
-        if (startpoint,remaining_goal) not in visited:
-            #print("remaining goal here is",remaining_goal)
-            visited.append((startpoint,remaining_goal))
-            #print("visited is" )
-            #print(visited)
-            for point in maze.neighbors(startpoint[0],startpoint[1]):
-                #print(point)
-                if (point,remaining_goal) not in visited:
-                    #print(maze.start)
-                    #print("remaining goal here is",remaining_goal)
+        if startpoint.pos in startpoint.remaining_goals:
+            #old_remaining_goal = remaining_goal
+            startpoint.remaining_goals = tuple (x for x in startpoint.remaining_goals if x != startpoint)
+            if len(startpoint.remaining_goals) == 0:
+                allfound = True
+                break
+        
+        if (startpoint,startpoint.remaining_goals) not in visited:
+            visited[(startpoint,startpoint.remaining_goals)] = startpoint
+        
+        for neighbor in maze.neighbors(startpoint.pos[0],startpoint.pos[1]):
+            if (neighbor, startpoint.remaining_goals) not in visited:
+                #newdepth = depth +1
+                #parentdict[(point,remaining_goal,newdepth)] = (startpoint,remaining_goal,depth)
+                neighbor_point = Point(neighbor,(startpoint.pos, startpoint.remaining_goals),startpoint.depth+1, startpoint.remaining_goals)
+                heapq.heappush(q,(neighbor_point.depth+h_multiple(neighbor,neighbor_point.remaining_goals),neighbor_point)) #add neighbor to heapq
 
-                    #print(point,remaining_goal)
+    #path.appendleft(maze.start)
+    finaldepth = startpoint.depth
+    #(point_topath, remaining_goal_topath) = (point, remaining_goal)
+    parent = startpoint.parent
+    while parent!= None:
+        #print(parentdict)
+        path.appendleft(visited[parent].pos)
+        #(point_topath, remaining_goal_topath,finaldepth) = parentdict[(point_topath, remaining_goal_topath,finaldepth)]
+        parent = visited[parent].parent
+    path.appendleft(maze.start)
+    print(path)
+    return path
+    '''if (startpoint,remaining_goal) not in visited:
+            visited.add((startpoint,remaining_goal))
+            for point in maze.neighbors(startpoint[0],startpoint[1]):
+                
+                if (point,remaining_goal) not in visited:
                     if point not in remaining_goal:
                         #print(depthdict)
                         #print(depthdict)
@@ -293,9 +327,9 @@ def astar_multiple(maze):
                             path.appendleft(maze.start)
                             allfound = True
 
-                        #print(q)
+                        #print(q)'''
                 
-    return path
+    
 
 #def astar_multiple(maze):
     """
@@ -502,6 +536,103 @@ def astar_multiple(maze):
                 
     return path
 
+def astar_multiple(maze):
+    
+    
+    q = []
+    heapq.heapify(q)
+    path = deque()
+    parentdict = {}
+    depthdict ={} #keep track of g(a)
+    visited = set()
+    all_waypoints = maze.waypoints
+    #remaining_goal_list = list(remaining_goal)
+    #remaining_goal = tuple(remaining_goal_list)
+    #print(all_waypoints)
+    initialdepth = 0
+    #print("H_multiple_test")
+    #print(h_multiple(maze.start,all_waypoints))
+    #path.append((maze.start,all_waypoints,initialdepth))
+    heapq.heappush(q,(0+h_multiple(maze.start,all_waypoints),(maze.start,all_waypoints)))
+    depthdict[(maze.start,all_waypoints)] = initialdepth
+
+    #heapq.heappush(q,(depthdict[(maze.start,remaining_goal)]+h_multiple(maze.start,remaining_goal),(maze.start,remaining_goal)))
+    #print(q)
+    allfound = False
+    #parentdict  [(maze.start,all_waypoints)]=1
+
+    while allfound != True:
+        [startpoint,remaining_goal] = heapq.heappop(q)[1]
+        #print ("startpoint and remaingoal is",[startpoint,remaining_goal] )
+        #print(startpoint)
+        if (startpoint,remaining_goal) not in visited:
+            #print("remaining goal here is",remaining_goal)
+            visited.add((startpoint,remaining_goal))
+            #print("visited is" )
+            #print(visited)
+            for point in maze.neighbors(startpoint[0],startpoint[1]):
+                #print(point)
+                if (point,remaining_goal) not in visited:
+                    #print(maze.start)
+                    #print("remaining goal here is",remaining_goal)
+
+                    #print(point,remaining_goal)
+                    if point not in remaining_goal:
+                        #print(depthdict)
+                        #print(depthdict)
+                        #print(point)
+                        #visited.append((point,remaining_goal))
+                        #print(parentdict)
+                        #print(parentdict[(startpoint,remaining_goal)])
+
+                        parentdict[(point,remaining_goal)] = (startpoint,remaining_goal)  # keep track of the parent of visited node
+                        depthdict[(point,remaining_goal)] = depthdict[ (startpoint,remaining_goal) ] +1
+                        heapq.heappush(q,(depthdict[(point,remaining_goal)]+h_multiple(point,remaining_goal),(point,remaining_goal))) #add neighbor to heapq
+
+                        #print(maze.states_explored)
+                        #print(parentdict[point])
+
+                    if point in remaining_goal:  #found waypoint, find the path now
+                        #print (numberofstep)
+                        #print (parentdict)
+                        found = point
+                        new_remaining_goal = remaining_goal
+                        
+                        #print("path is")
+                        #print(path)
+                        #path.appendleft(maze.start)
+                        #print(path)
+                        #print(remaining_goal_list)
+                        #print(point)
+                        new_remaining_goal_list = list(remaining_goal)
+                        new_remaining_goal_list.remove(found)
+                        new_remaining_goal= tuple(new_remaining_goal_list)
+                        #print("remaining goal is",remaining_goal)
+                        #visited.append((found,remaining_goal))
+                        #print((found,remaining_goal))
+                        parentdict[(found,new_remaining_goal)] = (startpoint,remaining_goal)
+                        depthdict[(found,new_remaining_goal)] = depthdict[(startpoint,remaining_goal)]+1
+
+                        #print("parentdict is",parentdict)
+
+                        heapq.heappush(q,(depthdict[(found,new_remaining_goal)]+h_multiple(found,new_remaining_goal),(found,new_remaining_goal)))
+                        if len(new_remaining_goal) == 0:
+                            point = found
+                            depth = depthdict[(found,new_remaining_goal)]
+                            while depth:
+                                depth -=1
+                                path.appendleft(point)
+                                #print("path is ", path)
+
+                                (point,new_remaining_goal) = parentdict[(point,new_remaining_goal)]
+                            
+                            path.appendleft(maze.start)
+                            allfound = True
+
+                        #print(q)
+                
+    return path
+
 def fast(maze):
     """
     Runs suboptimal search algorithm for part 5.
@@ -510,6 +641,99 @@ def fast(maze):
 
     @return path: a list of tuples containing the coordinates of each state in the computed path
     """
-    return []
+    w = 3.5
+    q = []
+    heapq.heapify(q)
+    path = deque()
+    parentdict = {}
+    depthdict ={} #keep track of g(a)
+    visited = set()
+    all_waypoints = maze.waypoints
+    #remaining_goal_list = list(remaining_goal)
+    #remaining_goal = tuple(remaining_goal_list)
+    #print(all_waypoints)
+    initialdepth = 0
+    #print("H_multiple_test")
+    #print(h_multiple(maze.start,all_waypoints))
+    #path.append((maze.start,all_waypoints,initialdepth))
+    heapq.heappush(q,(0+w*h_multiple(maze.start,all_waypoints),(maze.start,all_waypoints)))
+    depthdict[(maze.start,all_waypoints)] = initialdepth
+
+    #heapq.heappush(q,(depthdict[(maze.start,remaining_goal)]+h_multiple(maze.start,remaining_goal),(maze.start,remaining_goal)))
+    #print(q)
+    allfound = False
+    #parentdict  [(maze.start,all_waypoints)]=1
+
+    while allfound != True:
+        [startpoint,remaining_goal] = heapq.heappop(q)[1]
+        #print ("startpoint and remaingoal is",[startpoint,remaining_goal] )
+        #print(startpoint)
+        if (startpoint,remaining_goal) not in visited:
+            #print("remaining goal here is",remaining_goal)
+            visited.add((startpoint,remaining_goal))
+            #print("visited is" )
+            #print(visited)
+            for point in maze.neighbors(startpoint[0],startpoint[1]):
+                #print(point)
+                if (point,remaining_goal) not in visited:
+                    #print(maze.start)
+                    #print("remaining goal here is",remaining_goal)
+
+                    #print(point,remaining_goal)
+                    if point not in remaining_goal:
+                        #print(depthdict)
+                        #print(depthdict)
+                        #print(point)
+                        #visited.append((point,remaining_goal))
+                        #print(parentdict)
+                        #print(parentdict[(startpoint,remaining_goal)])
+
+                        parentdict[(point,remaining_goal)] = (startpoint,remaining_goal)  # keep track of the parent of visited node
+                        depthdict[(point,remaining_goal)] = depthdict[ (startpoint,remaining_goal) ] +1
+                        heapq.heappush(q,(depthdict[(point,remaining_goal)]+w*h_multiple(point,remaining_goal),(point,remaining_goal))) #add neighbor to heapq
+
+                        #print(maze.states_explored)
+                        #print(parentdict[point])
+
+                    if point in remaining_goal:  #found waypoint, find the path now
+                        #print (numberofstep)
+                        #print (parentdict)
+                        found = point
+                        new_remaining_goal = remaining_goal
+                        
+                        #print("path is")
+                        #print(path)
+                        #path.appendleft(maze.start)
+                        #print(path)
+                        #print(remaining_goal_list)
+                        #print(point)
+                        new_remaining_goal_list = list(remaining_goal)
+                        new_remaining_goal_list.remove(found)
+                        new_remaining_goal= tuple(new_remaining_goal_list)
+                        #print("remaining goal is",remaining_goal)
+                        #visited.append((found,remaining_goal))
+                        #print((found,remaining_goal))
+                        parentdict[(found,new_remaining_goal)] = (startpoint,remaining_goal)
+                        depthdict[(found,new_remaining_goal)] = depthdict[(startpoint,remaining_goal)]+1
+
+                        #print("parentdict is",parentdict)
+
+                        heapq.heappush(q,(depthdict[(found,new_remaining_goal)]+w*h_multiple(found,new_remaining_goal),(found,new_remaining_goal)))
+                        if len(new_remaining_goal) == 0:
+                            point = found
+                            depth = depthdict[(found,new_remaining_goal)]
+                            while depth:
+                                depth -=1
+                                path.appendleft(point)
+                                #print("path is ", path)
+
+                                (point,new_remaining_goal) = parentdict[(point,new_remaining_goal)]
+                            
+                            path.appendleft(maze.start)
+                            allfound = True
+
+                        #print(q)
+                
+    return path
     
             
