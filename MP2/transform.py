@@ -33,6 +33,14 @@ def transformToMaze(alien, goals, walls, window,granularity):
             Maze: the maze instance generated based on input arguments.
 
     """
+    center = alien.get_centroid()
+    rows = int(window[0]/granularity +1)
+    cols = int(window[0]/granularity +1)
+    maze = [[SPACE_CHAR for x in range(cols)] for y in range(rows)]
+
+    for idxs in np.ndindex((rows,cols)):
+        
+
     pass
 
 if __name__ == '__main__':
