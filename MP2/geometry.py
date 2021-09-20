@@ -32,7 +32,7 @@ def does_alien_touch_wall(alien, walls,granularity):
             True if touched, False if not
     """
  #   print(walls)
-    def wall_intercept_circle():
+    def wall_intercept_circle(alien, walls,granularity):
         center = alien.get_centroid()
         r = alien.get_width()
        # print(r)
@@ -53,7 +53,7 @@ def does_alien_touch_wall(alien, walls,granularity):
                 dist_center_to_line = abs(slope*center[0]-center[1]+intercept)/np.sqrt(slope**2+1)
                 print(dist_center_to_line)
                 if (dist_center_to_line < r+granularity/np.sqrt(2)) or np.isclose(dist_center_to_line , r+granularity/np.sqrt(2)):
-                    min_dist_x_pos = (-1*(-1*center[0]-slope*center[1])-slope*intercept)/(slope*2+1)
+                    min_dist_x_pos = (-1*(-1*center[0]-slope*center[1])-slope*intercept)/(slope**2+1)
                     if (min_dist_x_pos <= max(wall[2], wall[0])) & (min_dist_x_pos >= min(wall[2], wall[0])):
                         return True
                     
@@ -72,7 +72,7 @@ def does_alien_touch_wall(alien, walls,granularity):
                     
         return False 
 
-    def wall_intercept_horizonal():
+    def wall_intercept_horizonal(alien, walls,granularity):
         print("now in horizontal")
         center = alien.get_centroid()
         width = alien.get_width()
@@ -114,7 +114,7 @@ def does_alien_touch_wall(alien, walls,granularity):
             
         return False
 
-    def wall_intercept_vertical():
+    def wall_intercept_vertical(alien, walls,granularity):
         print("now in vertical")
         center = alien.get_centroid()
         width = alien.get_width()
@@ -157,11 +157,11 @@ def does_alien_touch_wall(alien, walls,granularity):
         return False
 
     if alien.get_shape() == "Ball":
-        return wall_intercept_circle()
+        return wall_intercept_circle(alien, walls,granularity)
     elif alien.get_shape() == "Horizontal":
-        return wall_intercept_horizonal()
+        return wall_intercept_horizonal(alien, walls,granularity)
     elif alien.get_shape() == "Vertical":
-        return wall_intercept_vertical()
+        return wall_intercept_vertical(alien, walls,granularity)
 
 
     return False
@@ -179,7 +179,7 @@ def does_alien_touch_goal(alien, goals):
     """
     center_alien = alien.get_centroid()
     print(center_alien)
-    def touch_goal_circle():
+    def touch_goal_circle(alien, goals):
         center_alien = alien.get_centroid()
         print(center_alien)
         r_alien= alien.get_width()
@@ -197,7 +197,7 @@ def does_alien_touch_goal(alien, goals):
         #print(walls)
         return False
     
-    def touch_goal_horizontal():
+    def touch_goal_horizontal(alien, goals):
         print('now goal horizontal')
         center_alien = alien.get_centroid()
         width = alien.get_width()
@@ -241,7 +241,7 @@ def does_alien_touch_goal(alien, goals):
         return False
 
 
-    def touch_goal_vertical():
+    def touch_goal_vertical(alien, goals):
         center_alien = alien.get_centroid()
         width = alien.get_width()
         head = alien.get_head_and_tail()[0]
@@ -285,11 +285,11 @@ def does_alien_touch_goal(alien, goals):
 
 
     if alien.get_shape() == "Ball":
-        return touch_goal_circle()
+        return touch_goal_circle(alien, goals)
     elif alien.get_shape() == "Horizontal":
-        return touch_goal_horizontal()
+        return touch_goal_horizontal(alien, goals)
     elif alien.get_shape() == "Vertical":
-        return touch_goal_vertical()
+        return touch_goal_vertical(alien, goals)
 
     return False
 #def does_alien_touch_goal(alien, goals):
@@ -320,7 +320,7 @@ def is_alien_within_window(alien, window,granularity):
     #print(alien.get_head_and_tail())
     #print(alien.get_shape())
     walls = window_lines
-    def wall_intercept_circle_window():
+    def wall_intercept_circle_window(alien, window,granularity):
         center = alien.get_centroid()
         r = alien.get_width()
         #print(r)
@@ -356,7 +356,7 @@ def is_alien_within_window(alien, window,granularity):
                     
         return True
     
-    def wall_intercept_horizonal_window():
+    def wall_intercept_horizonal_window(alien, window,granularity):
         print("now in horizontal")
         print(window)
         print(walls)
@@ -410,7 +410,7 @@ def is_alien_within_window(alien, window,granularity):
                 return False
         return True
 
-    def wall_intercept_vertical_window():
+    def wall_intercept_vertical_window(alien, window,granularity):
         print("now in vertical")
         print(window)
         print(walls)
@@ -461,11 +461,11 @@ def is_alien_within_window(alien, window,granularity):
         return True
 
     if alien.get_shape() == "Ball":
-        return wall_intercept_circle_window()
+        return wall_intercept_circle_window(alien, window,granularity)
     elif alien.get_shape() == "Horizontal":
-        return wall_intercept_horizonal_window()
+        return wall_intercept_horizonal_window(alien, window,granularity)
     elif alien.get_shape() == "Vertical":
-        return wall_intercept_vertical_window()
+        return wall_intercept_vertical_window(alien, window,granularity)
 
     #return False
 

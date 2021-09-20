@@ -144,6 +144,7 @@ class Application:
 
 				# self.arm.setArmAngle(newAngle)
 				self.gameLoop()
+				time.sleep(0.1)
 				# currAngle = copy.deepcopy(newAngle)
 
 				# if doesArmTipTouchGoals(armEnd, self.goals):
