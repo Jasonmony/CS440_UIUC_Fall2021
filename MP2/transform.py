@@ -23,67 +23,7 @@ from geometry import *
 from const import *
 from util import *
 
-def transformToMaze(alien, goals, walls, window,granularity):
-    """This function transforms the given 2D map to the maze in MP1.
-    
-        Args:
-            alien (Alien): alien instance
-            goals (list): [(x, y, r)] of goals
-            walls (list): [(startx, starty, endx, endy)] of walls
-            window (tuple): (width, height) of the window
- 
-        Return:
-            Maze: the maze instance generated based on input arguments. 
 
-    """
-    center = alien.get_centroid()
-    print(alien.get_shape)
-    shapeid = alien.get_shape_idx()
-    print(center)
-    rows = int(window[0]/granularity +1)
-    cols = int(window[0]/granularity +1)
-    startingrow = int(center[0]/granularity) +1
-    startingcol = int(center[1]/granularity) +1
-
-    #maze = Maze((1,1,1),alien)
-    #maze = [[[SPACE_CHAR for x in range(rows)] for y in range(cols+1)]for z in range(3)]
-    maze = [[SPACE_CHAR for x in range(rows)] for y in range(cols)]
-
-    #print(len(maze),len(maze[0]),len(maze[0][0]))
-
-    for shape in {'Horizontal','Ball','Vertical'}:
-        alien.set_alien_shape(shape)
-        level = alien.get_shape_idx()
-        print(level)
-        for i in range(rows):
-            for j in range (cols):
-                posx = granularity*(i+1)
-                posy = granularity*(j+1)
-                alien.set_alien_pos((posx,posy))
-                if does_alien_touch_wall(alien, walls, granularity):
-    #                print("i is ",i)
-   #                 print("j is ",j)
-  #                  print("col is ",cols)
- #                   print("row is ",rows)
-                    print('level',level)
-                    maze[level][i][j] = WALL_CHAR
-                if is_alien_within_window(alien, window, granularity):
-                    maze[level][i][j] = WALL_CHAR
-                if does_alien_touch_goal(alien,goals):
-                    maze[level][i][j] = OBJECTIVE_CHAR
-        maze[level][-1][0] = '#'
-    maze[shapeid][startingrow][startingcol] = 'P'
-    maze2d =[]
-    for e1 in maze:
-        for e2 in e1:
-            maze2d.append(e2) #flatten maze
-    
-    #for idxs in np.ndindex((rows,cols)):
-    finalmaze = Maze(maze2d,alien)
-    print("done2")
-    finalmaze.saveToFile('test')
-
-    pass
 
 def transformToMaze(alien, goals, walls, window,granularity):
     """This function transforms the given 2D map to the maze in MP1.
@@ -100,14 +40,16 @@ def transformToMaze(alien, goals, walls, window,granularity):
     """
     center = alien.get_centroid()
     #print(alien.get_shape)
+    initial_config = tuple(alien.get_config())
+    print(initial_config)
     #shapeid = alien.get_shape_idx()
-    print(center)
+    #print(center)
     rows = int(window[0]/granularity +1)
-    cols = int(window[0]/granularity +1)
+    cols = int(window[1]/granularity +1)
     #startingrow = int(center[0]/granularity) +1
     #startingcol = int(center[1]/granularity) +1
     maze = np.full((rows,cols,3),SPACE_CHAR)
-    print(len(maze),len(maze[0]),len(maze[0][0]))
+    #print(len(maze),len(maze[0]),len(maze[0][0]))
 
     
     #alien.set_alien_shape("Ball")
@@ -118,7 +60,8 @@ def transformToMaze(alien, goals, walls, window,granularity):
         config  = idxToConfig(idxs, [0,0,0], granularity,alien)
         #print(config)
         alien.set_alien_config(config)
-        if config[0] == center[0] and config[1] == center[1]:
+       # if config[0] == center[0] and config[1] == center[1] and config[2] == shapeid:
+        if config == initial_config:
             maze[idxs] = START_CHAR
         elif does_alien_touch_wall(alien, walls, granularity):
             maze[idxs] = WALL_CHAR
@@ -133,7 +76,8 @@ def transformToMaze(alien, goals, walls, window,granularity):
     #for idxs in np.ndindex((rows,cols)):
     finalmaze = Maze(maze,alien)
     print("done2")
-    finalmaze.saveToFile('test')
+    #finalmaze.saveToFile('test')
+    return finalmaze
 
     pass
 
@@ -202,6 +146,6 @@ if __name__ == '__main__':
                     print('\n\n')
 
     granularities = [2,5,10]
-    map_names = ['Test1','Test2','Test3','Test4','NoSolutionMap']
+    map_names = ['NoSolutionMap']
     generate_test_mazes(granularities,map_names)
     compare_test_mazes_with_gt(granularities,map_names)
