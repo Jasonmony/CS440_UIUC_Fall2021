@@ -38,10 +38,10 @@ def transformToMaze(alien, goals, walls, window,granularity):
             Maze: the maze instance generated based on input arguments. 
 
     """
-    center = alien.get_centroid()
-    #print(alien.get_shape)
+    #center = alien.get_centroid()
+    #print(alien.get_width())
     initial_config = tuple(alien.get_config())
-    print(initial_config)
+    #print(initial_config)
     #shapeid = alien.get_shape_idx()
     #print(center)
     rows = int(window[0]/granularity +1)
@@ -57,12 +57,17 @@ def transformToMaze(alien, goals, walls, window,granularity):
     #print(level)
     for idxs in np.ndindex((rows,cols,3)):
         #print(idxs)
+        #if alien.get_shape() == "Horizontal":
+            #print(alien.get_width())
+            #print(alien.get_head_and_tail())
+        flag = False
         config  = idxToConfig(idxs, [0,0,0], granularity,alien)
         #print(config)
         alien.set_alien_config(config)
        # if config[0] == center[0] and config[1] == center[1] and config[2] == shapeid:
         if config == initial_config:
             maze[idxs] = START_CHAR
+            flag = True
         elif does_alien_touch_wall(alien, walls, granularity):
             maze[idxs] = WALL_CHAR
         elif not is_alien_within_window(alien, window, granularity):
@@ -70,13 +75,12 @@ def transformToMaze(alien, goals, walls, window,granularity):
         elif does_alien_touch_goal(alien,goals):
             maze[idxs] = OBJECTIVE_CHAR      
             
- 
+    if flag == False:
+        maze[initial_config[0]//granularity][initial_config[1]//granularity][1] = START_CHAR
     
-    
-    #for idxs in np.ndindex((rows,cols)):
-    finalmaze = Maze(maze,alien)
+    mazelist= maze.tolist()
+    finalmaze = Maze(mazelist,alien)
     print("done2")
-    #finalmaze.saveToFile('test')
     return finalmaze
 
     pass
@@ -145,7 +149,7 @@ if __name__ == '__main__':
                         
                     print('\n\n')
 
-    granularities = [2,5,10]
-    map_names = ['NoSolutionMap']
+    granularities = [8]
+    map_names = ['Test1']
     generate_test_mazes(granularities,map_names)
     compare_test_mazes_with_gt(granularities,map_names)

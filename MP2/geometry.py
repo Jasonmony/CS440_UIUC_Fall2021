@@ -31,21 +31,13 @@ def does_alien_touch_wall(alien, walls,granularity):
         Return:
             True if touched, False if not
     """
- #   print(walls)
     def wall_intercept_circle(alien, walls,granularity):
         center = alien.get_centroid()
         r = alien.get_width()
-       # print(r)
-        #print("center is ",center)
-        #print(walls)
-        #print('stucked')
     
         
         for wall in walls:
-        #print(wall)
-            #print('current wall is ',wall)
-            #print(r)
-            #print(center)
+  
             if (wall[2]-wall[0]) != 0: #not vertical line
                 slope = (wall[3]-wall[1])/(wall[2]-wall[0])
                 #print(slope)
@@ -59,22 +51,19 @@ def does_alien_touch_wall(alien, walls,granularity):
                         return True
                     
             else:  # vertical line   
-               # print("shit, vertical line",wall) 
-                dist_center_to_line = abs(center[0]-wall[0])
-                #print(dist_center_to_line)
-                #print(r+granularity/np.sqrt(2))
+
+                dist_center_to_line = abs(center[0]-wall[0])        
                 if (dist_center_to_line < r+granularity/np.sqrt(2)) or np.isclose(dist_center_to_line , r+granularity/np.sqrt(2)):
                     min_dist_y_pos = center[1]
                     #print('mindist y pos is',min_dist_y_pos)
                     if (min_dist_y_pos < max(wall[3], wall[1])) & (min_dist_y_pos > min(wall[3], wall[1])):
                         return True
                 else:
-                    #print('min_dist y pos is not in line')
                     continue
                     
         return False 
 
-    def wall_intercept_horizonal(alien, walls,granularity):
+    #def wall_intercept_horizonal(alien, walls,granularity):
         #print("now in horizontal")
         center = alien.get_centroid()
         width = alien.get_width()
@@ -132,20 +121,64 @@ def does_alien_touch_wall(alien, walls,granularity):
                 self.x = x
                 self.y = y
 
-        def ccw(A,B,C):
-            return (C.y-A.y)*(B.x-A.x) > (B.y-A.y)*(C.x-A.x)
+        def orientation(A,B,C):
+            value = (C.y-A.y)*(B.x-A.x) > (B.y-A.y)*(C.x-A.x)
+            if value >0:
+                return 1 #cw
+            if value < 0:
+                return 2 #ccw
+            else:
+                 
+                return 0
 
-        def intersect(A,B,C,D):
-            return ccw(A,C,D) != ccw(B,C,D) and ccw(A,B,C) != ccw(A,B,D)    
+        def onSegment(p, q, r):
+            if ( (q.x <= max(p.x, r.x)) and (q.x >= min(p.x, r.x)) and
+                (q.y <= max(p.y, r.y)) and (q.y >= min(p.y, r.y))):
+                return True
+            return False    
+ 
+        def orientation(p, q, r):     
+          
+            val = (float(q.y - p.y) * (r.x - q.x)) - (float(q.x - p.x) * (r.y - q.y))
+            if (val > 0): #cw
+                return 1
+            elif (val < 0): #ccw
+                return 2
+            else:
+                return 0
+ 
+        def doIntersect(p1,q1,p2,q2):
 
+            o1 = orientation(p1, q1, p2)
+            o2 = orientation(p1, q1, q2)
+            o3 = orientation(p2, q2, p1)
+            o4 = orientation(p2, q2, q1)
 
-        a = Point(head[0]-width,head[1]-width)#bot left
-        b = Point(head[0]+width,head[1]-width)#bot right
-        c = Point(tail[0]-width,tail[1]+width)# top left
-        d = Point(tail[0]+width,tail[1]+width)#top right
+            if ((o1 != o2) and (o3 != o4)):
+                return True
+            if ((o1 == 0) and onSegment(p1, p2, q1)):
+                return True
+            if ((o2 == 0) and onSegment(p1, q2, q1)):
+                return True    
+            if ((o3 == 0) and onSegment(p2, p1, q2)):
+                return True
+            if ((o4 == 0) and onSegment(p2, q1, q2)):
+                return True
+        
+            return False
+                         
+
+        small_xx = min(head[0],tail[0])
+        large_xx = max(head[0],tail[0])
+        small_yy = min(head[1],tail[1])
+        large_yy = max(head[1],tail[1])
+        a = Point(small_xx-width,small_yy-width)#bot left
+        b = Point(large_xx+width,small_yy-width)#bot right
+        c = Point(small_xx-width,large_yy+width)# top left
+        d = Point(large_xx+width,large_yy+width)#top right
         #print(a.x,a.y,b.x,b.y,c.x,c.y,d.x,d.y)
         for wall in walls:
-        #print(wall)
+            #print(walls)
             wallPoint_1 = Point(wall[0],wall[1])
             wallPoint_2 = Point(wall[2],wall[3])
             #print(intersect(a,b,wallPoint_1,wallPoint_2))
@@ -153,21 +186,55 @@ def does_alien_touch_wall(alien, walls,granularity):
             #print(intersect(c,d,wallPoint_1,wallPoint_2))
             #print(intersect(d,a,wallPoint_1,wallPoint_2))            
             
-            if intersect(a,b,wallPoint_1,wallPoint_2) or  intersect(b,c,wallPoint_1,wallPoint_2) or  intersect(c,d,wallPoint_1,wallPoint_2) or intersect(d,a,wallPoint_1,wallPoint_2):
+            if doIntersect(a,b,wallPoint_1,wallPoint_2) or  doIntersect(b,c,wallPoint_1,wallPoint_2) or  doIntersect(c,d,wallPoint_1,wallPoint_2) or doIntersect(d,a,wallPoint_1,wallPoint_2):
                 return True
-                
+            elif wallPoint_1.x == wallPoint_2.x:
+                #print('shit, verticalwall')
+                #if np.isclose(a.x,wallPoint_1.x, granularity/np.sqrt(2)) or np.isclose(d.x,wallPoint_1.x, granularity/np.sqrt(2)) :
+                if abs(a.x-wallPoint_1.x) <granularity/np.sqrt(2) or abs(d.x-wallPoint_1.x)<granularity/np.sqrt(2) :
+                    #print(abs(a.x-wallPoint_1.x),abs(d.x-wallPoint_1.x))
+                    #print(granularity/np.sqrt(2))
+                    #print(abs(a.x-wallPoint_1.x) <(granularity/np.sqrt(2)) , abs(d.x-wallPoint_1.x)<(granularity/np.sqrt(2)))
+
+
+                    small_y = min(wallPoint_1.y,wallPoint_2.y)
+                    large_y = max(wallPoint_1.y,wallPoint_2.y)
+                    if c.y >= small_y and b.y <=large_y:
+                        #print(a.x,a.y,b.x,b.y,c.x,c.y,d.x,d.y,wallPoint_1.x,wallPoint_1.y,wallPoint_2.x,wallPoint_2.y)
+                        return True
+            elif wallPoint_1.y == wallPoint_2.y:
+                #print('shit2, horizontalwall')
+                #print(abs(a.y-wallPoint_1.y),abs(d.y-wallPoint_1.y))
+                #print(granularity/np.sqrt(2))
+                #print(abs(a.y-wallPoint_1.y)< granularity/np.sqrt(2) , abs(d.y-wallPoint_1.y)< granularity/np.sqrt(2) )
+                #print(a.x,a.y,b.x,b.y,c.x,c.y,d.x,d.y,wallPoint_1.x,wallPoint_1.y,wallPoint_2.x,wallPoint_2.y)
+                if abs(a.y-wallPoint_1.y)< granularity/np.sqrt(2) or abs(d.y-wallPoint_1.y)< granularity/np.sqrt(2) :
+                    #print(abs(a.y-wallPoint_1.y),abs(d.y-wallPoint_1.y))
+                    #print(granularity/np.sqrt(2))
+                    #print(abs(a.y-wallPoint_1.y)< granularity/np.sqrt(2) , abs(d.y-wallPoint_1.y)< granularity/np.sqrt(2) )
+                    small_x = min(wallPoint_1.x,wallPoint_2.x)
+                    large_x = max(wallPoint_1.x,wallPoint_2.x)
+                    if d.x >= small_x and a.x <=large_x:
+                        #print(a.x,a.y,b.x,b.y,c.x,c.y,d.x,d.y,wallPoint_1.x,wallPoint_1.y,wallPoint_2.x,wallPoint_2.y)
+
+                        return True               
+
+
+       
+
+               
         return False
 
     if alien.get_shape() == "Ball":
         return wall_intercept_circle(alien, walls,granularity)
     elif alien.get_shape() == "Horizontal":
-        return wall_intercept_horizonal(alien, walls,granularity)
+        return wall_intercept_vertical(alien, walls,granularity)
     elif alien.get_shape() == "Vertical":
         return wall_intercept_vertical(alien, walls,granularity)
 
 
     return False
-#def does_alien_touch_wall(alien, walls,granularity):
+
     return False
 def does_alien_touch_goal(alien, goals):
     """Determine whether the alien touches a goal
@@ -209,35 +276,39 @@ def does_alien_touch_goal(alien, goals):
         #print(center_alien)
         #print(head,tail)
 
-        smallhead = min(head[0],tail[0])
-        bighead = max(head[0],tail[0])
-        
         class Point:
             def __init__(self,x,y):
                 self.x = x
                 self.y = y
 
-        a = Point(bighead+width,head[1]-width)#bot right
-        b = Point(bighead+width,head[1]+width)#top right
-        c = Point(smallhead-width,tail[1]-width)# bot left
-        d = Point(smallhead-width,tail[1]+width)#top left
-        #print(a.x,a.y,b.x,b.y,c.x,c.y,d.x,d.y)
+        small_xx = min(head[0],tail[0])
+        large_xx = max(head[0],tail[0])
+        small_yy = min(head[1],tail[1])
+        large_yy = max(head[1],tail[1])
+        a = Point(small_xx-width,small_yy-width)#bot left
+        b = Point(large_xx+width,small_yy-width)#bot right
+        c = Point(small_xx-width,large_yy+width)# top left
+        d = Point(large_xx+width,large_yy+width)#top right
         for goal in goals:
             #print(goal)
             r = goal[2]
-            for point in (a,b,c,d):
-                if (goal[0]<=a.x) and (goal[0]>=c.x):
-                    if (goal[1]<=b.y+r) and (goal[1]>=a.y-r):
-                        return True
-                elif (goal[1]<=b.y) and (goal[1]>=a.y):
-                    if (goal[0]<=a.x+r) and (goal[0]>=c.x-r):
-                        return True
-                else:
-                    ##print(point.x,point.y)
-                    dist = np.sqrt((point.x-goal[0])**2+(point.y-goal[1])**2)
-                    #print(dist)
-                    if (dist < goal[2]) or np.isclose(dist,goal[2]):
-                        return True
+        #for point in (a,b,c,d):
+            if (goal[0]<=d.x) and (goal[0]>=a.x):
+                if (goal[1]<=d.y+r) and (goal[1]>=a.y-r):
+                    return True
+            elif (goal[1]<=d.y) and (goal[1]>=a.y):
+                if (goal[0]<=d.x+r) and (goal[0]>=a.x-r):
+                    return True
+            else:
+                ##print(point.x,point.y)
+                dist1 = np.sqrt((small_xx-goal[0])**2+(small_yy-goal[1])**2)
+                dist2 = np.sqrt((large_xx-goal[0])**2+(large_yy-goal[1])**2)
+
+                #print(dist)
+                if (dist1 < goal[2]+width) or np.isclose(dist1,goal[2]+width):
+                    return True
+                if (dist2 < goal[2]+width) or np.isclose(dist2,goal[2]+width):
+                    return True
 
 
         return False
@@ -291,10 +362,10 @@ def does_alien_touch_goal(alien, goals):
     elif alien.get_shape() == "Horizontal":
         return touch_goal_horizontal(alien, goals)
     elif alien.get_shape() == "Vertical":
-        return touch_goal_vertical(alien, goals)
+        return touch_goal_horizontal(alien, goals)
 
     return False
-#def does_alien_touch_goal(alien, goals):
+
     """Determine whether the alien touches a goal
         
         Args:
@@ -328,36 +399,12 @@ def is_alien_within_window(alien, window,granularity):
         #print(r)
         #print(center)
         #print(walls)
-    
-        
-        for wall in walls:
-        #print(wall)
-            #print('current wall is ',wall)
-            if (wall[2]-wall[0]) != 0: #not vertical line
-                slope = (wall[3]-wall[1])/(wall[2]-wall[0])
-                #print(slope)
-                intercept = wall[1]-slope*wall[0]
-                #print(intercept)
-                dist_center_to_line = abs(slope*center[0]-center[1]+intercept)/np.sqrt(slope**2+1)
-                #print(dist_center_to_line)
-                if (dist_center_to_line < r+granularity/np.sqrt(2)) or np.isclose(dist_center_to_line , r+granularity/np.sqrt(2)):
-                    min_dist_x_pos = (-1*(-1*center[0]-slope*center[1])-slope*intercept)/(slope*2+1)
-                    if (min_dist_x_pos <= max(wall[2], wall[0])) & (min_dist_x_pos >= min(wall[2], wall[0])):
-                        return False
-                    
-            else:  # vertical line   
-                #print("shit, vertical line",wall) 
-                dist_center_to_line = abs(center[0])
-                if dist_center_to_line < (r+granularity/np.sqrt(2)):
-                    min_dist_y_pos = center[1]
-                    #print('mindist y pos is',min_dist_y_pos)
-                    if (min_dist_y_pos < max(wall[3], wall[1])) & (min_dist_y_pos > min(wall[3], wall[1])):
-                        return False
-                else:
-                    #print('min_dist y pos is not in line')
-                    continue
-                    
-        return True
+        if center[0] <= r or center[0] >= window[0] -r:
+            return False
+        elif center[1] <= r or center[1] >= window[1] -r:
+            return False           
+        else:            
+            return True
     
     def wall_intercept_horizonal_window(alien, window,granularity):
         #print("now in horizontal")
@@ -374,44 +421,12 @@ def is_alien_within_window(alien, window,granularity):
         smallhead = min(head[0],tail[0])
         bighead = max(head[0],tail[0])
 
-
-        class Point:
-            def __init__(self,x,y):
-                self.x = x
-                self.y = y
-
-        def ccw(A,B,C):
-            return (C.y-A.y)*(B.x-A.x) > (B.y-A.y)*(C.x-A.x)
-
-        def intersect(A,B,C,D):
-            return ccw(A,C,D) != ccw(B,C,D) and ccw(A,B,C) != ccw(A,B,D)   
-
-
-        a = Point(bighead+width,head[1]-width)#bot right
-        b = Point(bighead+width,head[1]+width)#top right
-        c = Point(smallhead-width,tail[1]-width)# bot left
-        d = Point(smallhead-width,tail[1]+width)#top left
-        #print(a.x,a.y,b.x,b.y,c.x,c.y,d.x,d.y)
-        for wall in walls:
-            #print(wall)
-            wallPoint_1 = Point(wall[0],wall[1])
-            wallPoint_2 = Point(wall[2],wall[3])
-            ##print(intersect(a,b,wallPoint_1,wallPoint_2))
-            ##print(intersect(b,c,wallPoint_1,wallPoint_2))
-            ##print(intersect(c,d,wallPoint_1,wallPoint_2))
-            ##print(intersect(d,a,wallPoint_1,wallPoint_2))      
-            #print(wallPoint_1.x,wallPoint_1.y,wallPoint_2.x, wallPoint_2.y)  
-           # #print(np.isclose(c.x,0) , np.isclose(c.y,0) , np.isclose(b.x,window[0]) , np.isclose(b.y,window[1]))   
-            #print(intersect(a,b,wallPoint_1,wallPoint_2) , intersect(a,c,wallPoint_1,wallPoint_2) , intersect(c,d,wallPoint_1,wallPoint_2) ,intersect(d,b,wallPoint_1,wallPoint_2))
-            
-            if intersect(a,b,wallPoint_1,wallPoint_2) or  intersect(b,c,wallPoint_1,wallPoint_2) or  intersect(c,d,wallPoint_1,wallPoint_2) or intersect(d,a,wallPoint_1,wallPoint_2):
-                return False
-            elif np.isclose(c.x,0) or np.isclose(c.y,0) or np.isclose(b.x,window[0]) or np.isclose(b.y,window[1]):
-                ##print(np.isclose(c.x,0))
-               
-                #print("wtf")
-                return False
-        return True
+        if smallhead <= (width+ granularity/np.sqrt(2) ) or bighead >= (window[0] - width- granularity/np.sqrt(2) ):
+            return False
+        elif center[1] <= (width+ granularity/np.sqrt(2) ) or center[1] >= (window[1] - width- granularity/np.sqrt(2) ):
+            return False
+        else:
+            return True
 
     def wall_intercept_vertical_window(alien, window,granularity):
         #print("now in vertical")
@@ -424,45 +439,19 @@ def is_alien_within_window(alien, window,granularity):
         #print(width)
         #print(center)
         #print(head,tail)
+        smallhead = min(head[1],tail[1])
+        bighead = max(head[1],tail[1])
 
-        class Point:
-            def __init__(self,x,y):
-                self.x = x
-                self.y = y
+        if smallhead <= (width+ granularity/np.sqrt(2) ) or bighead >= window[1] - ((width+ granularity/np.sqrt(2) )):
+            return False
+        elif center[0] <= (width+ granularity/np.sqrt(2) ) or center[0] >= window[0] - (width+ granularity/np.sqrt(2) ):
+            return False
+        else:
+            return True
 
-        def ccw(A,B,C):
-            return (C.y-A.y)*(B.x-A.x) > (B.y-A.y)*(C.x-A.x)
-
-        def intersect(A,B,C,D):
-            return ccw(A,C,D) != ccw(B,C,D) and ccw(A,B,C) != ccw(A,B,D)        
-    
-        a = Point(head[0]-width,head[1]-width)#bot left
-        b = Point(head[0]+width,head[1]-width)#bot right
-        c = Point(tail[0]-width,tail[1]+width)# top left
-        d = Point(tail[0]+width,tail[1]+width)#top right
-        #print(a.x,a.y,b.x,b.y,c.x,c.y,d.x,d.y)
-        for wall in walls:
-        ##print(wall)
-            wallPoint_1 = Point(wall[0],wall[1])
-            wallPoint_2 = Point(wall[2],wall[3])
-            ##print(intersect(a,b,wallPoint_1,wallPoint_2))
-            ##print(intersect(b,c,wallPoint_1,wallPoint_2))
-            ##print(intersect(c,d,wallPoint_1,wallPoint_2))
-            ##print(intersect(d,a,wallPoint_1,wallPoint_2))   
-            #print(wallPoint_1.x,wallPoint_1.y,wallPoint_2.x, wallPoint_2.y)  
-         
-            #print(intersect(a,b,wallPoint_1,wallPoint_2) , intersect(b,c,wallPoint_1,wallPoint_2) , intersect(c,d,wallPoint_1,wallPoint_2) ,intersect(d,a,wallPoint_1,wallPoint_2))
-
-            if intersect(a,b,wallPoint_1,wallPoint_2) or  intersect(b,c,wallPoint_1,wallPoint_2) or  intersect(c,d,wallPoint_1,wallPoint_2) or intersect(d,a,wallPoint_1,wallPoint_2):
-                return False
-            elif np.isclose(a.x,0) or np.isclose(a.y,0) or np.isclose(d.x,window[0]) or np.isclose(d.y,window[1]):
-                ##print(np.isclose(c.x,0))
-               
-                #print("wtfvertical")
-                return False
+        
                 
-        return True
-
+        
     if alien.get_shape() == "Ball":
         return wall_intercept_circle_window(alien, window,granularity)
     elif alien.get_shape() == "Horizontal":
@@ -474,7 +463,7 @@ def is_alien_within_window(alien, window,granularity):
 
 
 
-#def is_alien_within_window(alien, window,granularity):
+
     return True 
 
 
