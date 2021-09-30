@@ -72,7 +72,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='CS440 MP3 Naive Bayes')
-    parser.add_argument('--bigram',dest="bigram", type=bool,default=False)
+    parser.add_argument('--bigram',dest="bigram", type=bool,default=True)
     parser.add_argument('--training', dest='training_dir', type=str, default = 'data/movie_reviews/train',
                         help='the directory of the training data')
     parser.add_argument('--development', dest='development_dir', type=str, default = 'data/movie_reviews/dev',
