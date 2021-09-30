@@ -15,16 +15,15 @@ from nltk.stem.porter import PorterStemmer
 from nltk.tokenize import RegexpTokenizer
 from tqdm import tqdm
 
-
 porter_stemmer = PorterStemmer()
 tokenizer = RegexpTokenizer(r'\w+')
 bad_words = {'aed','oed','eed'} # these words fail in nltk stemmer algorithm
-def loadDir(name,stemming,lower_case):
+def loadDir(name,stemming,lower_case,silently=False):
     # Loads the files in the folder and returns a list of lists of words from
     # the text in each file
     X0 = []
     count = 0
-    for f in tqdm(listdir(name)):
+    for f in tqdm(listdir(name),disable=silently):
         fullname = name+f
         text = []
         with open(fullname, 'rb') as f:
@@ -32,6 +31,7 @@ def loadDir(name,stemming,lower_case):
                 if lower_case:
                     line = line.decode(errors='ignore').lower()
                     text += tokenizer.tokenize(line)
+                    
                 else:
                     text += tokenizer.tokenize(line.decode(errors='ignore'))
         if stemming:
@@ -43,16 +43,16 @@ def loadDir(name,stemming,lower_case):
         count = count + 1
     return X0
 
-def load_dataset(train_dir, dev_dir, stemming=False, lower_case=False):
+def load_dataset(train_dir, dev_dir, stemming=False, lower_case=False, silently=True):
 
-    X0 = loadDir(train_dir + '/pos/',stemming, lower_case)
-    X1 = loadDir(train_dir + '/neg/',stemming, lower_case)
+    X0 = loadDir(train_dir + '/pos/',stemming, lower_case, silently)
+    X1 = loadDir(train_dir + '/neg/',stemming, lower_case, silently)
     X = X0 + X1
     Y = len(X0) * [1] + len(X1) * [0]
     Y = np.array(Y)
 
-    X_test0 = loadDir(dev_dir + '/pos/',stemming, lower_case)
-    X_test1 = loadDir(dev_dir + '/neg/',stemming, lower_case)
+    X_test0 = loadDir(dev_dir + '/pos/',stemming, lower_case,silently)
+    X_test1 = loadDir(dev_dir + '/neg/',stemming, lower_case,silently)
     X_test = X_test0 + X_test1
     Y_test = len(X_test0) * [1] + len(X_test1) * [0]
     Y_test = np.array(Y_test)
