@@ -77,7 +77,7 @@ def naiveBayes(train_set, train_labels, dev_set, laplace=0.01, pos_prior=0.75,si
         #print(yhats)
     return yhats
 
-
+ 
 # Keep this in the provided template
 def print_paramter_vals_bigram(unigram_laplace,bigram_laplace,bigram_lambda,pos_prior):
     print(f"Unigram Laplace {unigram_laplace}")
@@ -87,11 +87,11 @@ def print_paramter_vals_bigram(unigram_laplace,bigram_laplace,bigram_lambda,pos_
 
 
 # main function for the bigrammixture model
-def bigramBayes(train_set, train_labels, dev_set, unigram_laplace=0.1, bigram_laplace=0.005, bigram_lambda=0.5,pos_prior=0.5, silently=False):
+def bigramBayes(train_set, train_labels, dev_set, unigram_laplace=0.01, bigram_laplace=0.003, bigram_lambda=0.4,pos_prior=0.5, silently=False):
     # Keep this in the provided template
     #unigram_laplace=0.01
-    #bigram_laplace=0.005
-    #bigram_lambda=0.5
+    #bigram_laplace=0.003
+    #bigram_lambda=0.4
     print_paramter_vals_bigram(unigram_laplace,bigram_laplace,bigram_lambda,pos_prior)
     pos_word_dict_bigram , neg_word_dict_bigram = build_word_dict_bigram(train_set, train_labels)
     pos_log_prob_dict_bigram, pos_unknown_log_prob_bigram = build_prob_dict(pos_word_dict_bigram,bigram_laplace)
@@ -102,10 +102,10 @@ def bigramBayes(train_set, train_labels, dev_set, unigram_laplace=0.1, bigram_la
     pos_log_prob_dict, pos_unknown_log_prob = build_prob_dict(pos_word_dict,unigram_laplace)
     neg_log_prob_dict, neg_unknown_log_prob = build_prob_dict(neg_word_dict,unigram_laplace)
 
-    print("pos_unknown_log_prob_bigram",pos_unknown_log_prob_bigram)
-    print("neg_unknown_log_prob_bigram",neg_unknown_log_prob_bigram)
-    print("pos_unknown_log_prob",pos_unknown_log_prob)
-    print("neg_unknown_log_prob",neg_unknown_log_prob)
+    #print("pos_unknown_log_prob_bigram",pos_unknown_log_prob_bigram)
+    #print("neg_unknown_log_prob_bigram",neg_unknown_log_prob_bigram)
+    #print("pos_unknown_log_prob",pos_unknown_log_prob)
+    #print("neg_unknown_log_prob",neg_unknown_log_prob)
     yhats = []
     for doc in tqdm(dev_set,disable=silently):
         #print(doc)
@@ -191,8 +191,11 @@ def build_prob_dict(word_dict,laplace):
 def build_word_dict_bigram(training_set, training_label):
     worddict_pos = {}
     worddict_neg = {}
-    
-    for i in range(len(training_label)-1):
+    if len(training_set) < 5:
+        print(training_set)
+    if len(training_label) < 5:
+        print(training_label)    
+    for i in range(len(training_label)):
         sentence = training_set[i]
         #print(len(sentence))
         #n+= len(sentence)
@@ -208,5 +211,8 @@ def build_word_dict_bigram(training_set, training_label):
                     worddict_neg[(sentence[j],sentence[j+1])] += 1
                 else:
                     worddict_neg[(sentence[j],sentence[j+1])] = 1
-
+    if len(worddict_pos)<5:
+        print (worddict_pos)
+    if len(worddict_neg)<5:
+        print (worddict_neg)
     return worddict_pos, worddict_neg
