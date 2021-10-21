@@ -11,10 +11,10 @@ def baseline(train, test):
         E.g., [[(word1, tag1), (word2, tag2)], [(word3, tag3), (word4, tag4)]]
     '''
     #print(train[0])
-    #print(test[0])
+    print(test[0])
 
     word_tag_dict , tag_dict = build_dict(train)
-    print(tag_dict)
+    #print(word_tag_dict)
     predict_tag = []
 
     most_probable_tag_unseen = max(tag_dict,key = tag_dict.get)
@@ -28,6 +28,8 @@ def baseline(train, test):
             else:
                 predict_tag_this_line.append((word,most_probable_tag_unseen))
         predict_tag.append(predict_tag_this_line)
+    
+    print(predict_tag[0])
 
 
     return predict_tag
