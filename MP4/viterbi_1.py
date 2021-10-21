@@ -2,6 +2,7 @@
 Part 2: This is the simplest version of viterbi that doesn't do anything special for unseen words
 but it should do better than the baseline at words with multiple tags (because now you're using context
 to predict the tag).
+
 """
 from typing import Counter
 
@@ -146,7 +147,7 @@ def inference(line,tagset,initialtag_prob,initial_prob_unseen,emission_prob,emis
     #if i>100:
     #    print(backward)
 
-    for i in range(len(line)-1):
+    for i in range(len(line)):
         #print(i)
         result[len(line)-i-1] = (line[len(line)-i-1],maxtag)
         maxtag = backward[len(line)-i-1][maxtag]

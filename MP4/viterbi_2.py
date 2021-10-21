@@ -1,324 +1,159 @@
 """
-This is the main entry point for MP4. You should only modify code
-within this file -- the unrevised staff files will be used for all other
-files and classes when code is run, so be careful to not modify anything else.
+Part 2: This is the simplest version of viterbi that doesn't do anything special for unseen words
+but it should do better than the baseline at words with multiple tags (because now you're using context
+to predict the tag).
+
 """
-import numpy as np
-from collections import Counter
-from math import log
-from math import inf
+from typing import Counter
 
-def baseline(train, test):
-    '''
-    TODO: implement the baseline algorithm. This function has time out limitation of 1 minute.
-    input:  training data (list of sentences, with tags on the words)
-            E.g. [[(word1, tag1), (word2, tag2)...], [(word1, tag1), (word2, tag2)...]...]
-            test data (list of sentences, no tags on the words)
-            E.g  [[word1,word2,...][word1,word2,...]]
-    output: list of sentences, each sentence is a list of (word,tag) pairs.
-            E.g. [[(word1, tag1), (word2, tag2)...], [(word1, tag1), (word2, tag2)...]...]
-    '''
-    predicts = []
-    word_tag = {}
-    tag_ct = Counter()
-    for sentence in train:
-        for w_tag in sentence:
-            w, t = w_tag
-            if w not in word_tag:
-                word_tag[w] = Counter()
- 
-            word_tag[w][t] += 1
-            tag_ct[t] += 1
+import math
 
-    t_max = max(tag_ct.keys(), key=(lambda key: tag_ct[key]))
+def viterbi_1(train, test):
+    laplace = 0.001
+    wordset = set()
+    tagset = set()
+    for line in train:
+        for word in line:
+            wordset.add(word[0])
+            tagset.add(word[1])
 
-    for sentence in test:
-        tag_pred = []
-        for word in sentence:
-            if word in word_tag:
-                max_t = max((word_tag[word]).keys(), key=lambda key:word_tag[word][key])
-                tag_pred.append((word, max_t))
-            else:
-                tag_pred.append((word, t_max))
-        predicts.append(tag_pred)
-
-    return predicts
-
-
-def make_matrix(sentence, tags):
-    #matrix = [{tag:0 for tag in tags} for i in range(len(sentence))]
-    matrix = []
-    for i in range(len(sentence)):
-        matrix.append({tag:0 for tag in tags})
-    return matrix
-
-def make_b_ptr(sentence, tags):
-    back_ptr=[];
-    for i in range(len(sentence)):
-        back_ptr.append({tag:None for tag in list(tags)})
-    return back_ptr
-
-def helper(sentence,matrix, back_ptr, initial_prob, ip_uk, transition_prob, tp_uk, emission_prob, ep_uk, isDict):
-    for key, value in matrix[0].items():
-        pi = 0
-        b = 0
-        if key in initial_prob:
-            pi = initial_prob[key]
-        else:
-            pi=ip_uk
-        if (sentence[0], key) in emission_prob:
-            b = emission_prob[(sentence[0], key)]
-        else:
-            if isDict == 0:
-                b = ep_uk
-            else:
-                b = ep_uk[key]
-        matrix[0][key] = pi+b
-    for i in range(1, len(matrix)):
-        for k in matrix[i].keys():
-            max_prob = -inf
-            max_key = ""
-            b=0
-            if (sentence[i], k) in emission_prob:
-                b = emission_prob[(sentence[i], k)]
-            else:
-                if isDict == 0:
-                    b= ep_uk
-                else:
-                    b = ep_uk[key]
-            for k_prime in matrix[i-1].keys():
-                a = 0
-                if (k_prime, k) in transition_prob:
-                    a = transition_prob[(k_prime, k)]
-                else:
-                    if isDict == 0:
-                        a = tp_uk
-                    else:
-                        a = tp_uk[k_prime]
-
-                if (a+b+matrix[i-1][k_prime]) > max_prob:
-                    max_prob = a+b+matrix[i-1][k_prime]
-                    max_key = k_prime
-            matrix[i][k] = max_prob
-            back_ptr[i][k] = max_key
-    index = len(matrix)-1
-    key_ = max(matrix[index], key=lambda key: matrix[index][key])
-    return_s = []
-    while key_ != None and index>=0:
-        return_s = [(sentence[index], key_)]+return_s
-        key_ = back_ptr[index][key_]
-        index -= 1
-    return return_s
-
-
-def viterbi_p1(train, test):
-    '''
-    TODO: implement the simple Viterbi algorithm. This function has time out limitation for 3 mins.
-    input:  training data (list of sentences, with tags on the words)
-            E.g. [[(word1, tag1), (word2, tag2)], [(word3, tag3), (word4, tag4)]]
-            test data (list of sentences, no tags on the words)
-            E.g [[word1,word2...]]
-    output: list of sentences with tags on the words
-            E.g. [[(word1, tag1), (word2, tag2)...], [(word1, tag1), (word2, tag2)...]...]
-    '''
-    k = 0.0001
-
-    # make the sets of unique words and tags
-    words = set()
-    tags = set()
-    for s in train:
-        for pair in s:
-            w,t = pair
-            words.add(w)
-            tags.add(t)
-
-    # initial prob
-    init_tag_ct = Counter()
-    for sentence in train:
-        init_tag_ct[sentence[0][1]] += 1
-    initial_prob = dict(init_tag_ct)
-
-    for (t, c) in initial_prob.items():
-        initial_prob[t] = log((c+k)/(len(train) + k*len(tags)))
-    ip_uk = log(k/(len(train) + k*len(tags)))
-
-    # transition prob
-    transition = []
-    for s in train:
-        for i in range(1, len(s)):
-            curr_t = s[i][1]
-            prev_t = s[i-1][1]
-            transition.append((prev_t, curr_t))
-    transition_prob = dict(Counter(transition))
-    #tp_uk = dict()
-    for tag_1 in list(tags):
-        denominator = 0
-        for tag in list(tags):
-            if (tag_1, tag) in transition_prob:
-                denominator += transition_prob[(tag_1, tag)]
-        for tag in list(tags):
-            if (tag_1, tag) in transition_prob:
-                transition_prob[(tag_1, tag)] = log((transition_prob[(tag_1,tag)]+k)/(denominator+k*len(tags)))
-            else:
-                transition_prob[(tag_1, tag)] = log(k/(len(train)+k*len(tags))) #migh need to change the len used in denominator
-    tp_uk = log(k/(len(train)+k*len(tags)))
-
-    # emission prob
-    emission_prob = Counter()
-    tag_ct = Counter()
-    for s in train:
-        for wt_pair in s:
-            emission_prob[wt_pair] += 1
-            tag_ct[wt_pair[1]] += 1
-    emission_prob = dict(emission_prob)
-
-    for tag in list(tags):
-        for word in list(words):
-            if (word, tag) in emission_prob:
-                emission_prob[(word, tag)]=log((emission_prob[(word,tag)]+k)/(tag_ct[tag]+k*(len(words)+1)))
-            else:
-                emission_prob[(word, tag)] = log(k/(len(train)+k*(len(words)+1)))
-    ep_uk = log(k/(len(train)+k*(len(words)+1)))
-
-    estimated_test = [[] for i in range(len(test))]
-    i = 0
-    for s in test:
-        matrix = make_matrix(s, tags)
-        back_ptr = make_b_ptr(s, tags)
-        estimated_test[i] = helper(s,matrix, back_ptr, initial_prob, ip_uk, transition_prob, tp_uk, emission_prob, ep_uk, 0)
-        i += 1
-
-    predicts = []
-    predicts = estimated_test
-    return predicts
-
-# part 2 hapax
-def hapax(train, tags, alpha):
-    '''
-    wt_ctr = Counter()
-    for s in train:
-        for pair in s:
-            wt_ctr[pair[0]] += 1
-    wt_ctr = dict(wt_ctr)
-    happax = [k for k,v in wt_ctr.items() if v==1]
-    happax = set(happax)
-    hap_tags = Counter()
-    for s in train:
-        for pair in s:
-            if pair[0] in happax:
-                hap_tags[pair[1]] += 1
-    hap_tags = dict(hap_tags)
-    sum_ = sum(hap_tags.values())
-    for tag in tags:
-        if tag not in hap_tags:
-            hap_tags[tag] = alpha/(sum_+len(tags)*alpha)
-    for k,v in hap_tags.items():
-        hap_tags[k] = (v+alpha)/(sum_ + alpha*len(tags))
     
-    return hap_tags
-    '''
-    wc = dict()
-    twc = dict()
-    for s in train:
-        for p in s:
-            w, t = p
-            wc[w] = wc.get(w, 0) + 1
-
-            if not t in twc:
-                twc[t] = dict()
-            twc[t][w] = twc[t].get(w, 0) + 1
-    hapax = list(map(lambda x : x[0], filter(lambda x : x[1] == 1, wc.items())))
-
-    h = {t:(sum(twc[t].get(w, 0) for w in hapax) + alpha)/(len(hapax) + alpha*len(tags)) for t in list(tags)}
-    return h
     
+    
+    initialtag = Counter()
+    for line in train:
+        initialtag[line[0][1]] += 1
+    #initialtag_prob = dict[initialtag]
+    #print(initialtag)
+    initialtag_prob = {}
 
-def viterbi_2(train, test):
-    '''
-    TODO: implement the optimized Viterbi algorithm. This function has time out limitation for 3 mins.
-    input:  training data (list of sentences, with tags on the words)
-            E.g. [[(word1, tag1), (word2, tag2)], [(word3, tag3), (word4, tag4)]]
-            test data (list of sentences, no tags on the words)
-            E.g [[word1,word2...]]
-    output: list of sentences with tags on the words
-            E.g. [[(word1, tag1), (word2, tag2)...], [(word1, tag1), (word2, tag2)...]...]
-    '''
-    k = 10**(-4)
+    for key in initialtag:
+        initialtag_prob[key] = math.log((initialtag[key]+laplace)/(len(train)+laplace*len(initialtag)))
+    initial_prob_unseen = math.log(laplace/(len(train)+len(initialtag)))
 
-    # make the sets of unique words and tags
-    tot_pairs = 0
-    words = set()
-    tags = set()
-    for s in train:
-        for pair in s:
-            tot_pairs += 1
-            w,t = pair
-            words.add(w)
-            tags.add(t)
+    print(initialtag_prob)
+    print(initial_prob_unseen)
+    print("len initial prob ", len(initialtag_prob))
+    transition_prob, transition_prob_unseen = build_transition_dict(train,wordset,tagset,laplace)
+    emission_prob, emission_prob_unseen = build_emission_dict(train,wordset,tagset,laplace)
+    #print("transition prob")
+    #print(transition_prob)
+    #print("transition_prob_unseen")
+    #print(transition_prob_unseen)
+    #print("len transition prob ", len(transition_prob))
+    #with open("dict2.txt", 'w') as f: 
+    #    for key, value in transition_prob.items(): 
+     #       f.write('%s:%s\n' % (key, value))
+    #print("emission_prob prob")
+    #print(emission_prob)
+    #print("emission_prob")
+    #print(emission_prob_unseen)
+    #with open("dict4.txt", 'w') as f: 
+    #    for key, value in emission_prob.items(): 
+     #       f.write('%s:%s\n' % (key, value))
 
-    # initial prob
-    init_tag_ct = dict()
-    for sentence in train:
-        init_tag_ct[sentence[0][1]] = init_tag_ct.get(sentence[0][1], 0) + 1
-    initial_prob = {t: log((c+k)/(len(train) + k*len(tags))) for (t, c) in init_tag_ct.items()}
-    ip_uk = log(k/(len(train) + k*len(tags)))
+    print(inference(test[2],tagset,initialtag_prob,initial_prob_unseen,emission_prob,emission_prob_unseen, transition_prob, transition_prob_unseen))
+    predict = []
+    for line in test:
+        predict.append(inference(line,tagset,initialtag_prob,initial_prob_unseen,emission_prob,emission_prob_unseen, transition_prob, transition_prob_unseen))
 
-    # transition prob
-    transition_prob = dict()
-    pct = dict()
-    for s in train:
-        for i in range(0, len(s)):
-            curr_t = s[i][1]
-            prev_t = s[i-1][1]
-            pct[prev_t] = pct.get(prev_t,0) + 1
-            transition_prob[(prev_t, curr_t)] = transition_prob.get((prev_t, curr_t), 0) + 1
-    #transition_prob = dict(Counter(transition))
-    #tp_uk = dict()
-    for tag_1 in list(tags):
-        #denominator = 0
-        #for tag in list(tags):
-        #    if (tag_1, tag) in transition_prob:
-        #        denominator += transition_prob[(tag_1, tag)]
-        for tag in list(tags):
-            if (tag_1, tag) in transition_prob:
-                transition_prob[(tag_1, tag)] = log((transition_prob[(tag_1,tag)]+k)/(pct[tag_1]+k*(len(tags)+1)))
-            #else:
-            #    transition_prob[(tag_1, tag)] = log(k/(tot_pairs+k*len(tags))) #might need to change the len used in denominator
+    return predict
 
-    tp_uk = {tp:log(k/(pct.get(tp, 0)+k*len(tags))) for tp in list(tags)}
 
-    # hapax calculations
-    hapax_dict = hapax(train, tags, k)
-    print(hapax_dict)
+def build_transition_dict(train,wordset,tagset,laplace):
+    transition = Counter()
+    transition_prob = {}
+    transition_prob_unseen = math.log((laplace)/(len(train)+laplace*len(tagset)))
+    #print(train[0])
+    for line in train:
+        for i in range(1,len(line)):
+            curr = line[i][1]
+            parent = line[i-1][1]
+            transition[(parent,curr)]  += 1
+    for tag1 in tagset:
+        n = 0
+        for tag2 in tagset:
+            if (tag1, tag2) in transition:
+                n += transition[(tag1,tag2)] # total number of known transition pairs with tag1
+        for tag2 in tagset:
+            if (tag1, tag2) in transition:
+                transition_prob[(tag1, tag2) ] = math.log((transition[(tag1, tag2) ]+laplace)/(n+laplace*len(tagset)))
+            else:
+                transition_prob[(tag1, tag2) ] = transition_prob_unseen
+    
+    return transition_prob, transition_prob_unseen
 
-    # emission prob
-    emission_prob = Counter()
-    tag_ct = Counter()
-    for s in train:
-        for wt_pair in s:
-            emission_prob[wt_pair] += 1
-            tag_ct[wt_pair[1]] += 1
-    emission_prob = dict(emission_prob)
+    
+def build_emission_dict(train,wordset,tagset,laplace):
+    emission = Counter()
+    emission_prob = {}
+    count = Counter()
+    emission_prob_unseen = math.log((laplace)/(len(train)+laplace*len(wordset)))
+    for line in train:
+        for word in line:
+            emission[word] += 1
+            count[word[1]] += 1
+    for tag in tagset:
+        for word in wordset:
+            if (word,tag) in emission:
+                emission_prob[(word,tag)] = math.log((emission[(word,tag)]+laplace)/(count[tag]+laplace*len(wordset)))
+            else:
+                emission_prob[(word,tag)]= emission_prob_unseen
+    return emission_prob, emission_prob_unseen
 
-    for tag in list(tags):
-        #denominator = 0
-        #for word in list(words):
-        #    if (word, tag) in emission_prob:
-        #        denominator += emission_prob[(word,tag)]
-        for word in list(words):
-            if (word, tag) in emission_prob:
-                emission_prob[(word, tag)] = log((emission_prob[(word,tag)]+k*hapax_dict[tag])/(tag_ct[tag]+k*(len(words)+1)*hapax_dict[tag]))
-            #else:
-            #    emission_prob[(word, tag)] = log((k*hapax_dict[tag])/(tag_ct[tag]+k*hapax_dict[tag]*(len(words)+1)))
-    ep_uk = {tag:log((k*hapax_dict[tag])/(tag_ct.get(tag,0)+ k*hapax_dict[tag]*(len(words)+1))) for tag in list(tags)}
+def inference(line,tagset,initialtag_prob,initial_prob_unseen,emission_prob,emission_prob_unseen, transition_prob, transition_prob_unseen):
 
-    estimated_test = [[] for i in range(len(test))]
-    i= 0
-    for s in test:
-        matrix = make_matrix(s, tags)
-        back_ptr = make_b_ptr(s, tags)
-        estimated_test[i] = helper(s, matrix, back_ptr, initial_prob, ip_uk, transition_prob, tp_uk, emission_prob, ep_uk, 1)
-        i += 1
-    predicts = []
-    predicts = estimated_test
-    return predicts
+    #matrix_prob = [{tag:0 for tag in tagset}] * len(line)
+    #backward = [{tag:None for tag in tagset}]* len(line)
+    matrix_prob = [{tag:0 for tag in tagset} for i in range(len(line))] #place holder for prob
+
+    backward=[{tag:0 for tag in tagset} for i in range(len(line))]#place holder for tag
+
+  
+    #find out initial tag prob
+    for item in tagset:
+        if item in initialtag_prob:
+            p1 = initialtag_prob[item]
+        else:
+            p1=initial_prob_unseen
+        if (line[0], item) in emission_prob:
+            matrix_prob[0][item] = p1 + emission_prob[(line[0], item)]
+        else:
+            matrix_prob[0][item] = p1+ emission_prob_unseen
+
+    #following trellis
+    for i in range(1, len(matrix_prob)):
+        for tag in tagset:
+            max_p = -math.inf
+            if (line[i],tag) in emission_prob:
+                p1 = emission_prob[(line[i],tag)]
+            else:
+                p1 = emission_prob_unseen
+            
+            for tag1 in tagset: # traceback for each possible way to current tag
+                if (tag1,tag ) in transition_prob:
+                    p2 = transition_prob[(tag1,tag )]
+                else:
+                    p2 = transition_prob_unseen
+
+                if p1+p2+matrix_prob[i-1][tag1] > max_p:
+                    max_p = p1+p2+matrix_prob[i-1][tag1]
+                    mostprobable_tag = tag1
+            matrix_prob[i][tag] = max_p
+            backward[i][tag] = mostprobable_tag
+    result = [(0,0)]*len(line) #place holder for result
+    maxtag = max(matrix_prob[-1], key=matrix_prob[-1].get) #most probably last tag, start traceback
+    #print("i",i,"maxtag", maxtag)
+    #if i>100:
+    #    print(backward)
+
+    for i in range(len(line)):
+        #print(i)
+        result[len(line)-i-1] = (line[len(line)-i-1],maxtag)
+        maxtag = backward[len(line)-i-1][maxtag]
+
+    #print("tag length is", len(result))
+    
+    return result
+            
+

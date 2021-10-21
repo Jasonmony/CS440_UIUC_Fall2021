@@ -2,13 +2,13 @@
 Part 2: This is the simplest version of viterbi that doesn't do anything special for unseen words
 but it should do better than the baseline at words with multiple tags (because now you're using context
 to predict the tag).
+
 """
 from typing import Counter
-from collections import deque 
 
 import math
 
-def viterbi_3(train, test):
+def viterbi_1(train, test):
     laplace = 0.001
     wordset = set()
     tagset = set()
@@ -102,38 +102,35 @@ def build_emission_dict(train,wordset,tagset,laplace):
     return emission_prob, emission_prob_unseen
 
 def inference(line,tagset,initialtag_prob,initial_prob_unseen,emission_prob,emission_prob_unseen, transition_prob, transition_prob_unseen):
-    #print("WORD length is", len(line))
 
     #matrix_prob = [{tag:0 for tag in tagset}] * len(line)
     #backward = [{tag:None for tag in tagset}]* len(line)
     matrix_prob = [{tag:0 for tag in tagset} for i in range(len(line))] #place holder for prob
 
-    backward=[{tag:None for tag in tagset} for i in range(len(line))]#place holder for tag
+    backward=[{tag:0 for tag in tagset} for i in range(len(line))]#place holder for tag
 
   
     #find out initial tag prob
-    for item in matrix_prob[0].items():
-        if item[0] in initialtag_prob:
-            p1 = initialtag_prob[item[0]]
+    for item in tagset:
+        if item in initialtag_prob:
+            p1 = initialtag_prob[item]
         else:
             p1=initial_prob_unseen
-        if (line[0], item[0]) in emission_prob:
-            matrix_prob[0][item[0]] = p1 + emission_prob[(line[0], item[0])]
+        if (line[0], item) in emission_prob:
+            matrix_prob[0][item] = p1 + emission_prob[(line[0], item)]
         else:
-            matrix_prob[0][item[0]] = p1+ emission_prob_unseen
+            matrix_prob[0][item] = p1+ emission_prob_unseen
 
     #following trellis
     for i in range(1, len(matrix_prob)):
-        for tag in matrix_prob[i].keys():
+        for tag in tagset:
             max_p = -math.inf
-            p1 = 0
             if (line[i],tag) in emission_prob:
                 p1 = emission_prob[(line[i],tag)]
             else:
                 p1 = emission_prob_unseen
             
-            for tag1 in matrix_prob[i-1].keys(): # traceback for each possible way to current tag
-                p2 =0
+            for tag1 in tagset: # traceback for each possible way to current tag
                 if (tag1,tag ) in transition_prob:
                     p2 = transition_prob[(tag1,tag )]
                 else:
@@ -144,19 +141,17 @@ def inference(line,tagset,initialtag_prob,initial_prob_unseen,emission_prob,emis
                     mostprobable_tag = tag1
             matrix_prob[i][tag] = max_p
             backward[i][tag] = mostprobable_tag
-    n = len(line) -1
-    result = deque()
-    #result = ["END"]
-
-    maxtag = max(matrix_prob[n], key=matrix_prob[n].get) #most probably last tag, start traceback
+    result = [(0,0)]*len(line) #place holder for result
+    maxtag = max(matrix_prob[-1], key=matrix_prob[-1].get) #most probably last tag, start traceback
     #print("i",i,"maxtag", maxtag)
     #if i>100:
     #    print(backward)
-    while n>=0 :
-        result.appendleft((line[n],maxtag))
-        maxtag = backward[n][maxtag]
-        n -=1
-    
+
+    for i in range(len(line)):
+        #print(i)
+        result[len(line)-i-1] = (line[len(line)-i-1],maxtag)
+        maxtag = backward[len(line)-i-1][maxtag]
+
     #print("tag length is", len(result))
     
     return result
