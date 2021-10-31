@@ -8,7 +8,7 @@ from typing import Counter
 
 import math
 
-def viterbi_1(train, test):
+def viterbi_3(train, test):
     laplace = 0.001
     wordset = set()
     tagset = set()
