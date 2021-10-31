@@ -80,7 +80,7 @@ if __name__ == "__main__":
                         help='Learning rate - default 1.0')
     parser.add_argument('--max_iter',dest="max_iter", type=int, default = 10,
                         help='Maximum iterations - default 10')
-    parser.add_argument('--k',dest="k", type=int, default = 2,
+    parser.add_argument('--k',dest="k", type=int, default = 5,
                         help='Value k for kNN - default 2')
 
     args = parser.parse_args()
