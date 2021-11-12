@@ -79,17 +79,10 @@ def classifyKNN(train_set, train_labels, dev_set, k):
     # TODO: Write your code here
     result = []
     workingdict = {}
-    #print(train_labels)
     for dev in dev_set:
         for i in range(len(train_labels)):
-            #print(dev)
-            #print(len(dev))
-            ##print(train_set[i])
-            #print(len(train_set[i]))
-
             workingdict[i] = np.linalg.norm(dev-train_set[i])
         topk = heapq.nsmallest(k, workingdict.items(), key=itemgetter(1))
-        #print(topk)
         label = 0
         for neighbor in topk:
             label += train_labels[neighbor[0]]
@@ -97,6 +90,4 @@ def classifyKNN(train_set, train_labels, dev_set, k):
             result.append(1)
         else:
             result.append(0)
-    print(result)
-
     return result
