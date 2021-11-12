@@ -85,7 +85,7 @@ class NeuralNet(nn.Module):
     def forward(self, x):
         """Perform forward."""
         batch_size = int(torch.numel(x)/3072)
-        print(batch_size)
+        #print(batch_size)
         x= torch.reshape(x, [batch_size,3,32,32])
         # conv layers
         x = self.net(x)
@@ -93,6 +93,8 @@ class NeuralNet(nn.Module):
         # flatten
         x = x.view(x.size(0), -1)
         
+        print(x.size())
+
         # fc layer
         x = self.fc_layer(x)
 
@@ -107,7 +109,7 @@ class NeuralNet(nn.Module):
         @return L: total empirical risk (mean of losses) for this batch as a float (scalar)
         """
         optimizer = optim.Adam(self.net.parameters(), lr=0.0001)
-
+        
         optimizer.zero_grad()
         self.loss_fn(self.forward(x),y).backward()
         optimizer.step()
@@ -116,7 +118,7 @@ class NeuralNet(nn.Module):
 
         return loss
 
-def fit(train_set,train_labels,dev_set,epochs,batch_size=100):
+def fit(train_set,train_labels,dev_set,epochs=200,batch_size=100):
     """ Make NeuralNet object 'net' and use net.step() to train a neural net
     and net(x) to evaluate the neural net.
 
@@ -137,7 +139,7 @@ def fit(train_set,train_labels,dev_set,epochs,batch_size=100):
     @return net: a NeuralNet object
     """
     #print(net.parameters)
-    lrate = 2e-2
+    lrate = 1e-2
     loss_fn = torch.nn.CrossEntropyLoss()
     in_size = 3072
     out_size = 4
@@ -147,9 +149,12 @@ def fit(train_set,train_labels,dev_set,epochs,batch_size=100):
     train_set_norm = (train_set-train_set.mean())/(train_set.std())
 
     for i in range(epochs):
-
-        features =  get_dataset_from_arrays(train_set_norm, train_labels)[i*batch_size%2250:(i+1)*batch_size%2250]['features']
-        labels =  get_dataset_from_arrays(train_set_norm, train_labels)[i*batch_size%2250:(i+1)*batch_size%2250]['labels']
+        j = i
+        if j>= 2250/batch_size- 1:
+            j = j %(2250//batch_size) 
+        print(j)
+        features =  get_dataset_from_arrays(train_set_norm, train_labels)[j*batch_size%2250:(j+1)*batch_size%2250]['features']
+        labels =  get_dataset_from_arrays(train_set_norm, train_labels)[j*batch_size%2250:(j+1)*batch_size%2250]['labels']
 
         losses.append(net.step(features, labels))
     yhats = []
