@@ -25,7 +25,7 @@ from utils import get_dataset_from_arrays
 from torch.utils.data import DataLoader
 
 class NeuralNet(nn.Module):
-    def __init__(self, lrate, loss_fn, in_size, out_size):
+    '''def __init__(self, lrate, loss_fn, in_size, out_size):
         """
         Initializes the layers of your neural network.
 
@@ -67,17 +67,61 @@ class NeuralNet(nn.Module):
             nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2, stride=2),
-        )
+            
+        )'''
+    def __init__(self, lrate, loss_fn, in_size, out_size):
+        """
+        Initializes the layers of your neural network.
 
+        @param lrate: learning rate for the model
+        @param loss_fn: A loss function defined as follows:
+            @param yhat - an (N,out_size) Tensor
+            @param y - an (N,) Tensor
+            @return l(x,y) an () Tensor that is the mean loss
+        @param in_size: input dimension
+        @param out_size: output dimension
+        """
+        super(NeuralNet, self).__init__()
+        self.loss_fn = loss_fn
+        self.lrate = lrate 
+        self.in_size = in_size
+        self.net = torch.nn.Sequential(
+
+            # Conv Layer block 1
+            nn.Conv2d(in_channels=3, out_channels=8, kernel_size=3, padding=1),
+            nn.BatchNorm2d(8),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(in_channels=8, out_channels=16, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+
+            # Conv Layer block 2
+            nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, padding=1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Dropout2d(p=0.05),
+
+            # Conv Layer block 3
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            
+        )
 
         self.fc_layer = nn.Sequential(
             nn.Dropout(p=0.1),
-            nn.Linear(4096, 1024),
+            nn.Linear(1024, 256),
             nn.ReLU(inplace=True),
-            nn.Linear(1024, 512),
+            nn.Linear(256, 256),
             nn.ReLU(inplace=True),
             nn.Dropout(p=0.1),
-            nn.Linear(512, out_size)
+            nn.Linear(256, out_size)
         )
 
     
@@ -93,7 +137,7 @@ class NeuralNet(nn.Module):
         # flatten
         x = x.view(x.size(0), -1)
         
-        print(x.size())
+        #print(x.size())
 
         # fc layer
         x = self.fc_layer(x)
@@ -108,7 +152,7 @@ class NeuralNet(nn.Module):
         @param y: an (N,) Tensor
         @return L: total empirical risk (mean of losses) for this batch as a float (scalar)
         """
-        optimizer = optim.Adam(self.net.parameters(), lr=0.0001)
+        optimizer = optim.Adam(self.net.parameters(), lr=0.001, weight_decay= 0.0001)
         
         optimizer.zero_grad()
         self.loss_fn(self.forward(x),y).backward()
@@ -145,14 +189,14 @@ def fit(train_set,train_labels,dev_set,epochs=200,batch_size=100):
     out_size = 4
     net = NeuralNet(lrate, loss_fn, in_size, out_size)
     losses = []
-
+    epochs = 200
     train_set_norm = (train_set-train_set.mean())/(train_set.std())
 
     for i in range(epochs):
         j = i
         if j>= 2250/batch_size- 1:
             j = j %(2250//batch_size) 
-        print(j)
+        #print(j)
         features =  get_dataset_from_arrays(train_set_norm, train_labels)[j*batch_size%2250:(j+1)*batch_size%2250]['features']
         labels =  get_dataset_from_arrays(train_set_norm, train_labels)[j*batch_size%2250:(j+1)*batch_size%2250]['labels']
 
